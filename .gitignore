@@ -209,3 +209,6 @@ __marimo__/
 # training cache
 /notebooks/catboost_info
 catboost_info
+
+# artifacts
+/artifacts
