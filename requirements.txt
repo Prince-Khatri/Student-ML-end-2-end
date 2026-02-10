@@ -2,4 +2,7 @@ python-dotenv
 pandas
 numpy
 seaborn
--e .
+scikit-learn
+xgboost
+catboost
+# -e .
