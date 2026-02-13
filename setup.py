@@ -4,7 +4,7 @@ from typing import List
 REQUIREMENTS_PATH = "requirements.txt"
 HYPEN_E_DOT = "-e ."
 
-def get_requirements(file_path:str)->List(str):
+def get_requirements(file_path:str)->List[str]:
     """
         This is a function to return a list of requirements.txt from given path.
     """
@@ -13,7 +13,7 @@ def get_requirements(file_path:str)->List(str):
         requirements = f.readlines()
         requirements = [req.replace("\n","") for req in requirements]
     
-        if HYPEN_E_DOT == "-e .":
+        if HYPEN_E_DOT in requirements:
             requirements.remove(HYPEN_E_DOT)
     
     return requirements
