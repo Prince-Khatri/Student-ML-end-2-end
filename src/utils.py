@@ -5,6 +5,7 @@ import pandas as pd
 import dill
 from .exception import CustomException
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+from sklearn.model_selection import GridSearchCV
 from .logger import logging
 from .decorators import handle_exception
 
@@ -17,7 +18,14 @@ def save_object(file_path, obj):
     os.makedirs(dir_name,exist_ok=True)
     with open(file_path, 'wb') as file_obj:
         dill.dump(obj, file_obj)
+
+@handle_exception
+def load_object(file_path):
+    with open(file_path, 'rb') as file_obj:
+        object = dill.load(file_obj)
+    return object
     
+
 @handle_exception
 def save_as_csv(file_name, file_path, columns ,rows):
     """
@@ -28,6 +36,7 @@ def save_as_csv(file_name, file_path, columns ,rows):
     os.makedirs(dir_name,exist_ok=True)
     csv_file_path = os.path.join(dir_name,f"{file_name}_{len(os.listdir(dir_name))//2}.csv")
     df.to_csv(csv_file_path)
+    
 
    
 
@@ -48,7 +57,7 @@ def evaluate_performance(y_true, y_pred):
     r2 = r2_score(y_true, y_pred)
     return mse, rmse, mae, r2
 
-def evaluate_models(X_train, y_train, X_test, y_test, models):
+def evaluate_models(X_train, y_train, X_test, y_test, models, params):
     """
         This is a function to train different models at once.
     """
@@ -62,23 +71,31 @@ def evaluate_models(X_train, y_train, X_test, y_test, models):
 
     for model_name, model_object in models.items():
         logging.info(f"Training:{model_name}")
-        model_object.fit(X_train,y_train)
-        y_train_pred = model_object.predict(X_train)
-        y_test_pred = model_object.predict(X_test)
+        
+        param = params[model_name]
+        gs = GridSearchCV(model_object, param, cv=3)# Finding best hyperparameter
+        gs.fit(X_train, y_train)
+
+        # model_object.fit(X_train,y_train)
+        y_train_pred = gs.predict(X_train)
+        y_test_pred = gs.predict(X_test)
 
         model_train_metrics.append([model_name] + list(evaluate_performance(y_train, y_train_pred)))
         model_test_metrics.append([model_name] + list(evaluate_performance(y_test, y_test_pred)))
 
         if best_r2<model_test_metrics[-1][-1]:
             best_r2 = model_test_metrics[-1][-1]
-            best_model = model_name
+            best_model_name = model_name
+            best_model = gs.best_estimator_
     
     # Can apply threshold over metrics for best model
     # if best_r2<0.6:
     #   raise CustomException("No best model found")
 
-    logging.info(f"All Models trained and best model is {best_model} with r2 = {best_r2}")
+    logging.info(f"All Models trained and best model is {best_model_name} with r2 = {best_r2}")
     return model_train_metrics, model_test_metrics, best_model
+
+
 
 
 
